@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>叫車表單</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f2f2f2;margin:0;padding:0;}
+.container{max-width:500px;margin:40px auto;background:#fff;padding:30px;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.1);}
+h2{text-align:center;color:#333;}
+label{display:block;margin-top:15px;color:#555;}
+input,textarea{width:100%;padding:12px;margin-top:5px;border:1px solid #ccc;border-radius:6px;box-sizing:border-box;font-size:16px;}
+textarea{resize:vertical;}
+button{width:100%;padding:15px;margin-top:25px;background:#4CAF50;color:white;border:none;border-radius:8px;font-size:18px;cursor:pointer;}
+button:hover{background:#45a049;}
+.alert{display:none;margin-top:20px;padding:15px;background-color:#4CAF50;color:white;border-radius:6px;text-align:center;}
+@media(max-width:600px){.container{margin:20px;padding:20px;}}
+</style>
+</head>
+<body>
+<div class="container">
+<h2>🚖 叫車表單</h2>
+<form id="taxiForm">
+<label>電話（可填可不填）</label>
+<input type="tel" name="phone" placeholder="請輸入電話">
+<label>上車地點（可填可不填）</label>
+<input type="text" name="pickup" placeholder="請輸入上車地點">
+<label>目的地（可填可不填）</label>
+<input type="text" name="destination" placeholder="請輸入目的地">
+<label>備註（可填可不填）</label>
+<textarea name="note" rows="3" placeholder="可輸入特殊需求或備註"></textarea>
+<button type="submit">📩 叫車</button>
+</form>
+<div class="alert" id="alertBox">✅ 訊息已送到 LINE，請等待司機聯絡！</div>
+</div>
+
+<!-- LIFF SDK -->
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script>
+let userId = '';
+
+window.onload = async function() {
+  await liff.init({ liffId: '2007979399-ge92zyvv' }); // 換成你的 LIFF ID
+  const profile = await liff.getProfile();
+  userId = profile.userId;
+}
+
+const form = document.getElementById('taxiForm');
+const alertBox = document.getElementById('alertBox');
+
+form.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const now = new Date();
+  const timeStr = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+
+  const data={
+      userId: userId,
+      phone: form.phone.value || "未填",
+      pickup: form.pickup.value || "未填",
+      destination: form.destination.value || "未填",
+      note: form.note.value || "未填",
+      time: timeStr
+  };
+
+  try{
+      const res = await fetch("https://script.google.com/macros/s/AKfycbwX9KjE51zq4scVKdlquYQ4GrKv1C50lD4mBmwdQIwJYs_pQAoGAtaF3g36r9lSclRQxg/exec", {
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify(data)
+      });
+      const result = await res.text();
+      alertBox.style.display='block';
+      setTimeout(()=>{alertBox.style.display='none';form.reset();},2000);
+  }catch(err){
+      alert("發送失敗："+err);
+  }
+});
+</script>
+</body>
+</html>
